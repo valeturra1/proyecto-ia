@@ -50,7 +50,7 @@ def leer_mundo(ruta):
             posiciones[valor].append((i, j))  # recorre cada casilla de la matriz y guarda la posicion de cada elemento en el diccionario
 
     
-    for codigo, nombre in ((AGROBOT, "AgroBot"), (DEPOSITO, "depósito"), (AVIONETA, "avioneta")):  # verifica que haya solo 1 agrobot, 1 deposito y 1 avioneta
+    for codigo, nombre in ((AGROBOT, "AgroBot"), (DEPOSITO, "deposito"), (AVIONETA, "avioneta")):  # verifica que haya solo 1 agrobot, 1 deposito y 1 avioneta
         if len(posiciones[codigo]) != 1:
             raise ValueError(f"Debe haber exactamente 1 {nombre} y hay {len(posiciones[codigo])}.")
 
@@ -59,7 +59,7 @@ def leer_mundo(ruta):
         "inicio": posiciones[AGROBOT][0],                # devuelve la posicion inicial del agrobot, que es la unica que hay pq solo hay un agrobot jaja
         "deposito": posiciones[DEPOSITO][0],             # devuelve la posicion del deposito, que es la unica que hay pq solo hay un deposito jaja
         "avioneta": posiciones[AVIONETA][0],             # devuelve la posicion de la avioneta, que es la unica que hay pq solo hay una avioneta jaja
-        "cultivos": posiciones[CULTIVO_SECO],            # devuelve la lista de posiciones de los cultivos secos
+        "cultivos": tuple(posiciones[CULTIVO_SECO]),     # devuelve la tupla de posiciones de los cultivos secos
     }
 
 
