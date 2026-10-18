@@ -113,37 +113,41 @@ def coste_uniforme(mundo):
     raiz = crear_nodo(estado_inicial(mundo)) # creamos el nodo inicial :>
     raiz["reinicio"] = True # es lo que habia implementado juan jose de reinicio cuando riega y asi
 
-    contador = 0 
-    frontera = [(0, 0, contador, raiz)]
-    expandidos = 0
+    contador = 0 # el desempate definitico 
+    frontera = [(0, 0, contador, raiz)] # edtructura que vamos a usar para gaurdar todos los noddos que ya genere
+    expandidos = 0 #el que adivine que significa esto se gana un premio
     profundidad_max = 0
-    nodo_meta = None
+    nodo_meta = None 
 
 
-    while frontera:
+    while frontera: #mientras haya algo en frontera pues trin
         _,_,_,nodo = heapq.heappop(frontera) #cola de prioridad :3 es para que siempre saque el que tiene menor coste sin improtar el orden en el que se ingresan a la cola
 
-        if es_meta(nodo["estado"]):
+        if es_meta(nodo["estado"]): #si el nodo que sacamos de la frontera es la meta pues terminamos con lo que ya hay
             nodo_meta = nodo
             break
 
-        expandidos += 1
+        expandidos += 1 
         nodo["orden"] = expandidos
 
-        for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo):
-            celda = (estado_hijo[0], estado_hijo[1])
+        for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo): #recordemos que la funcion nos devuelve esos 3 valores, entonces por cada operador, nuevo estado y tales que nos devuevla la funcion vamos a hacer la validacion de recorrido 
+            
+            # lo que hizo juan jose para evitar ciclos
+            celda = (estado_hijo[0], estado_hijo[1]) # definimos la celda 
 
             if celda_en_historial(nodo, celda):
                 continue
 
-            hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov)
+            # creo el hijo con el operador ligado a su padre y me voy quedando con la profundidad maxima mientras voy expandiendo
+            hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov) #
             hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo)
             profundidad_max = max(profundidad_max, hijo["profundidad"])
 
+            # aqui meto el hijo a la cola de espera, o sea a la de frontera
             contador += 1 
             heapq.heappush(frontera, (hijo["costo"], ORDEN_OPERADORES[operador], contador, hijo))
 
-
+    #retorno la meta para recontruir el arbol con las dema metricas
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
