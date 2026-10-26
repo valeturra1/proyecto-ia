@@ -4,6 +4,8 @@ import pygame
 
 from mundo import (leer_mundo, TAMANO, OBSTACULO, AGROBOT,
                    CULTIVO_SECO, DEPOSITO, AVIONETA)
+from algoritmos import amplitud, coste_uniforme
+from busqueda_informada import busqueda_avara, busqueda_a_estrella
 
 TAM_CASILLA = 50
 LADO_MUNDO = TAMANO * TAM_CASILLA
@@ -13,7 +15,7 @@ X_MUNDO = MARGEN
 Y_MUNDO = ALTO_ENCABEZADO + 14
 X_DIVISOR = X_MUNDO + LADO_MUNDO + 8 + 20
 X_PANEL = X_DIVISOR + 20
-ANCHO_PANEL = 440
+ANCHO_PANEL = 550
 Y_BARRA = Y_MUNDO + LADO_MUNDO + 8 + 14
 ALTO_BARRA = 34
 ANCHO_VENTANA = X_PANEL + ANCHO_PANEL + MARGEN
@@ -39,7 +41,8 @@ ALGORITMOS = {
     "Informada": ["Avara", "A*"],
 }
 
-NOMBRES_IMAGENES = ["persona", "serpiente_enojada", "serpiente_domada",
+NOMBRES_IMAGENES = ["persona", "persona_espada", "persona_mula", "persona_mula_espada",
+                    "serpiente_enojada", "serpiente_domada",
                     "espada", "mula", "obstaculo", "tierra"]
 
 NOMBRE_LOGO = "logo"
@@ -47,6 +50,23 @@ TAM_LOGO = 52
 AJUSTE_TEXTO_BOTON = 4
 ESCALA_CAMPESINO = 1.2
 CARPETA_IMAGENES = "imagenes"
+MS_POR_PASO = 220
+
+ALGORITMOS_CON_COSTO = ["Costo uniforme", "A*"]
+
+FUNCIONES = {
+    "Amplitud": amplitud,
+    "Costo uniforme": coste_uniforme,
+    "Avara": busqueda_avara,
+    "A*": busqueda_a_estrella,
+}
+
+CLAVES_RESULTADO = {
+    "Amplitud": ("nodo_meta", "expandidos"),
+    "Costo uniforme": ("nodo_meta", "expandidos"),
+    "Avara": ("meta", "nodos_expandidos"),
+    "A*": ("meta", "nodos_expandidos"),
+}
 
 IMAGEN_DE_CODIGO = {
     OBSTACULO: "obstaculo",
@@ -142,7 +162,7 @@ def cargar_imagenes():
         original = leer_png(carpeta, nombre)
         rellenar = nombre == "tierra"
         lado = TAM_CASILLA
-        if nombre == "persona":
+        if nombre.startswith("persona"):
             lado = round(TAM_CASILLA * ESCALA_CAMPESINO)
         grandes[nombre] = ajustar_imagen(original, lado, rellenar)
         chicas[nombre] = ajustar_imagen(original, 30, rellenar)
@@ -155,13 +175,66 @@ def poner_imagen(pantalla, rect, imagen):
                            rect.centery - imagen.get_height() // 2))
 
 
-def dibujar_casilla(pantalla, rect, codigo, imagenes):
+def dibujar_casilla(pantalla, rect, codigo, imagenes, celda, vista):
     pantalla.blit(imagenes["grandes"]["tierra"], rect.topleft)
-    if codigo in IMAGEN_DE_CODIGO and codigo != AGROBOT:
-        poner_imagen(pantalla, rect, imagenes["grandes"][IMAGEN_DE_CODIGO[codigo]])
+    if codigo == AGROBOT or codigo not in IMAGEN_DE_CODIGO:
+        return
+    nombre = IMAGEN_DE_CODIGO[codigo]
+    if vista is not None:
+        if codigo == CULTIVO_SECO and celda not in vista["pendientes"]:
+            nombre = "serpiente_domada"
+        if codigo == AVIONETA and vista["mula_usada"]:
+            return
+    poner_imagen(pantalla, rect, imagenes["grandes"][nombre])
 
 
-def dibujar_encabezado(pantalla, fuentes, imagenes):
+def dibujar_agrobot(pantalla, rect, imagenes, en_mula, con_espada):
+    if en_mula and con_espada:
+        nombre = "persona_mula_espada"
+    elif en_mula:
+        nombre = "persona_mula"
+    elif con_espada:
+        nombre = "persona_espada"
+    else:
+        nombre = "persona"
+    poner_imagen(pantalla, rect, imagenes["grandes"][nombre])
+
+
+def formatear_tiempo(segundos):
+    if segundos < 1:
+        return str(round(segundos * 1000, 1)) + " ms"
+    return str(round(segundos, 2)) + " s"
+
+
+def formatear_costo(costo):
+    if costo == int(costo):
+        return str(int(costo))
+    return str(costo)
+
+
+def dibujar_reporte(pantalla, fuentes, reporte):
+    datos = [
+        ("Nodos expandidos", str(reporte["expandidos"])),
+        ("Profundidad del árbol", str(reporte["profundidad"])),
+        ("Tiempo de cómputo", formatear_tiempo(reporte["tiempo"])),
+    ]
+    if reporte["costo"] is not None:
+        datos.append(("Costo de la solución", formatear_costo(reporte["costo"])))
+    ancho_ficha = 165
+    separacion = 8
+    total = len(datos) * ancho_ficha + (len(datos) - 1) * separacion
+    x = ANCHO_VENTANA - MARGEN - total
+    for etiqueta, valor in datos:
+        rect = pygame.Rect(x, 10, ancho_ficha, 54)
+        pygame.draw.rect(pantalla, PERGAMINO, rect, border_radius=3)
+        pygame.draw.rect(pantalla, ORO, rect, 2, border_radius=3)
+        etiqueta = recortar(etiqueta, fuentes["etiqueta"], ancho_ficha - 10)
+        dibujar_texto_centrado(pantalla, fuentes["etiqueta"], etiqueta, rect.centerx, rect.top + 6, TINTA_SUAVE)
+        dibujar_texto_centrado(pantalla, fuentes["valor"], valor, rect.centerx, rect.top + 25, BURDEOS)
+        x += ancho_ficha + separacion
+
+
+def dibujar_encabezado(pantalla, fuentes, imagenes, reporte):
     pygame.draw.rect(pantalla, MADERA, (0, 0, ANCHO_VENTANA, ALTO_ENCABEZADO - 4))
     pygame.draw.line(pantalla, ORO, (0, ALTO_ENCABEZADO - 4), (ANCHO_VENTANA, ALTO_ENCABEZADO - 4), 3)
     pygame.draw.line(pantalla, LINEA_FUERTE, (0, ALTO_ENCABEZADO - 1), (ANCHO_VENTANA, ALTO_ENCABEZADO - 1), 2)
@@ -172,9 +245,11 @@ def dibujar_encabezado(pantalla, fuentes, imagenes):
     dibujar_texto(pantalla, fuentes["titulo"], "CampesinoBot", MARGEN + 70, 6, ORO)
     dibujar_texto(pantalla, fuentes["suave"], "Búsqueda para domar bestias",
                   MARGEN + 72, 50, PERGAMINO)
+    if reporte is not None:
+        dibujar_reporte(pantalla, fuentes, reporte)
 
 
-def dibujar_mundo(pantalla, fuentes, matriz, imagenes):
+def dibujar_mundo(pantalla, fuentes, matriz, imagenes, vista):
     mundo = pygame.Rect(X_MUNDO, Y_MUNDO, LADO_MUNDO, LADO_MUNDO)
     marco = mundo.inflate(16, 16)
 
@@ -197,13 +272,19 @@ def dibujar_mundo(pantalla, fuentes, matriz, imagenes):
         for j in range(TAMANO):
             rect = pygame.Rect(X_MUNDO + j * TAM_CASILLA, Y_MUNDO + i * TAM_CASILLA,
                                TAM_CASILLA, TAM_CASILLA)
-            dibujar_casilla(pantalla, rect, matriz[i][j], imagenes)
-    for i in range(TAMANO):
-        for j in range(TAMANO):
-            if matriz[i][j] == AGROBOT:
-                rect = pygame.Rect(X_MUNDO + j * TAM_CASILLA, Y_MUNDO + i * TAM_CASILLA,
-                                   TAM_CASILLA, TAM_CASILLA)
-                poner_imagen(pantalla, rect, imagenes["grandes"]["persona"])
+            dibujar_casilla(pantalla, rect, matriz[i][j], imagenes, (i, j), vista)
+
+    if vista is None:
+        for i in range(TAMANO):
+            for j in range(TAMANO):
+                if matriz[i][j] == AGROBOT:
+                    rect = pygame.Rect(X_MUNDO + j * TAM_CASILLA, Y_MUNDO + i * TAM_CASILLA,
+                                       TAM_CASILLA, TAM_CASILLA)
+                    dibujar_agrobot(pantalla, rect, imagenes, False, False)
+    else:
+        rect = pygame.Rect(X_MUNDO + vista["col"] * TAM_CASILLA, Y_MUNDO + vista["fila"] * TAM_CASILLA,
+                           TAM_CASILLA, TAM_CASILLA)
+        dibujar_agrobot(pantalla, rect, imagenes, vista["en_mula"], vista["con_espada"])
 
 
 def dibujar_segmento(pantalla, fuente, rect, texto, activo, hover):
@@ -326,7 +407,123 @@ def cargar(app, ruta):
     except (ValueError, OSError) as error:
         app["mensaje"] = "Error: " + str(error)
         return
+    app["animacion"] = None
+    app["reporte"] = None
     app["mensaje"] = "Mundo cargado: " + ruta
+
+
+def hallar_raiz(resultado, meta):
+    if "raiz" in resultado:
+        return resultado["raiz"]
+    if meta is None:
+        return None
+    nodo = meta
+    while nodo["padre"] is not None:
+        nodo = nodo["padre"]
+    return nodo
+
+
+def profundidad_del_arbol(raiz):
+    maxima = 0
+    pila = [raiz]
+    while pila:
+        nodo = pila.pop()
+        if nodo["profundidad"] > maxima:
+            maxima = nodo["profundidad"]
+        for hijo in nodo["hijos"]:
+            pila.append(hijo)
+    return maxima
+
+
+def camino_de_estados(meta):
+    estados = []
+    operadores = []
+    nodo = meta
+    while nodo is not None:
+        estados.append(nodo["estado"])
+        operadores.append(nodo["operador"])
+        nodo = nodo["padre"]
+    estados.reverse()
+    operadores.reverse()
+    return estados, operadores
+
+
+def mensaje_animacion(animacion):
+    indice = animacion["indice"]
+    total = len(animacion["estados"]) - 1
+    if indice == total:
+        return animacion["nombre"] + ": solución completa en " + str(total) + " pasos"
+    if indice == 0:
+        return animacion["nombre"] + ": solución de " + str(total) + " pasos"
+    estado = animacion["estados"][indice]
+    return ("Paso " + str(indice) + " de " + str(total) + ": " + animacion["operadores"][indice]
+            + " | fertilizante " + str(estado[2]) + " | combustible " + str(estado[4]))
+
+
+def ejecutar_busqueda(app):
+    nombre = app["algoritmo"]
+    clave_meta, clave_expandidos = CLAVES_RESULTADO[nombre]
+    resultado = FUNCIONES[nombre](app["mundo"])
+    meta = resultado[clave_meta]
+
+    raiz = hallar_raiz(resultado, meta)
+    if raiz is None:
+        profundidad = resultado["profundidad"]
+    else:
+        profundidad = profundidad_del_arbol(raiz)
+
+    costo = None
+    if nombre in ALGORITMOS_CON_COSTO and meta is not None:
+        costo = meta["costo"]
+
+    app["reporte"] = {
+        "expandidos": resultado[clave_expandidos],
+        "profundidad": profundidad,
+        "tiempo": resultado["tiempo"],
+        "costo": costo,
+    }
+
+    if meta is None:
+        app["mensaje"] = nombre + ": no se encontró una solución"
+        return
+
+    estados, operadores = camino_de_estados(meta)
+    app["animacion"] = {
+        "nombre": nombre,
+        "estados": estados,
+        "operadores": operadores,
+        "indice": 0,
+        "ultimo": pygame.time.get_ticks(),
+    }
+    app["mensaje"] = mensaje_animacion(app["animacion"])
+
+
+def avanzar_animacion(app):
+    animacion = app["animacion"]
+    if animacion is None:
+        return
+    if animacion["indice"] >= len(animacion["estados"]) - 1:
+        return
+    ahora = pygame.time.get_ticks()
+    if ahora - animacion["ultimo"] >= MS_POR_PASO:
+        animacion["indice"] += 1
+        animacion["ultimo"] = ahora
+        app["mensaje"] = mensaje_animacion(animacion)
+
+
+def vista_actual(app):
+    animacion = app["animacion"]
+    if animacion is None:
+        return None
+    estado = animacion["estados"][animacion["indice"]]
+    return {
+        "fila": estado[0],
+        "col": estado[1],
+        "pendientes": estado[3],
+        "en_mula": estado[4] > 0,
+        "con_espada": estado[2] > 0,
+        "mula_usada": estado[5],
+    }
 
 
 def procesar_evento(app, evento, regiones):
@@ -347,8 +544,13 @@ def procesar_evento(app, evento, regiones):
                 elif clase == "iniciar":
                     if app["mundo"] is None:
                         app["mensaje"] = "Primero carga un mundo: arrastra el archivo .txt a la ventana"
+                    elif app["algoritmo"] not in FUNCIONES:
+                        app["mensaje"] = app["algoritmo"] + " aún no está implementado"
                     else:
-                        app["mensaje"] = "Seleccionado: " + app["algoritmo"] + " (aún no implementado)"
+                        app["animacion"] = None
+                        app["reporte"] = None
+                        app["mensaje"] = "Buscando con " + app["algoritmo"] + "..."
+                        app["buscar"] = True
     return True
 
 
@@ -368,6 +570,8 @@ def main():
         "normal": crear_fuente(serif, 18),
         "boton": crear_fuente(serif, 19, True),
         "chica": crear_fuente(serif, 15),
+        "etiqueta": crear_fuente(serif, 14),
+        "valor": crear_fuente(serif, 22, True),
     }
 
     app = {
@@ -375,6 +579,9 @@ def main():
         "tipo": "No informada",
         "algoritmo": ALGORITMOS["No informada"][0],
         "mensaje": "Arrastre un archivo .txt a la ventana para cargar el mundo.",
+        "buscar": False,
+        "animacion": None,
+        "reporte": None,
     }
 
     if len(sys.argv) > 1:
@@ -391,12 +598,14 @@ def main():
 
         pos_mouse = pygame.mouse.get_pos()
 
+        avanzar_animacion(app)
+
         pantalla.fill(FONDO)
-        dibujar_encabezado(pantalla, fuentes, imagenes)
+        dibujar_encabezado(pantalla, fuentes, imagenes, app["reporte"])
         if app["mundo"] is None:
-            dibujar_mundo(pantalla, fuentes, None, imagenes)
+            dibujar_mundo(pantalla, fuentes, None, imagenes, None)
         else:
-            dibujar_mundo(pantalla, fuentes, app["mundo"]["matriz"], imagenes)
+            dibujar_mundo(pantalla, fuentes, app["mundo"]["matriz"], imagenes, vista_actual(app))
         regiones = dibujar_panel(pantalla, fuentes, app, pos_mouse, imagenes)
         dibujar_barra(pantalla, fuentes, app["mensaje"])
 
@@ -412,6 +621,11 @@ def main():
                 pass
 
         pygame.display.flip()
+
+        if app["buscar"]:
+            app["buscar"] = False
+            ejecutar_busqueda(app)
+
         reloj.tick(30)
 
     pygame.quit()
