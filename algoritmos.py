@@ -78,12 +78,16 @@ def amplitud(mundo):
     cola = deque([raiz])
     expandidos = 0
     profundidad_max = 0
-    nodo_meta = raiz if es_meta(raiz["estado"]) else None
+    nodo_meta = None
 
     while cola and nodo_meta is None:
         nodo = cola.popleft()
         expandidos += 1
         nodo["orden"] = expandidos
+
+        if es_meta(nodo["estado"]):
+            nodo_meta = nodo
+            break
 
         for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo):
             celda = (estado_hijo[0], estado_hijo[1])
@@ -94,9 +98,6 @@ def amplitud(mundo):
             hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo)
             profundidad_max = max(profundidad_max, hijo["profundidad"])
 
-            if es_meta(estado_hijo):
-                nodo_meta = hijo
-                break
             cola.append(hijo)
 
     return {
@@ -123,12 +124,12 @@ def coste_uniforme(mundo):
     while frontera: #mientras haya algo en frontera pues trin
         _,_,_,nodo = heapq.heappop(frontera) #cola de prioridad :3 es para que siempre saque el que tiene menor coste sin improtar el orden en el que se ingresan a la cola
 
+        expandidos += 1 
+        nodo["orden"] = expandidos
+
         if es_meta(nodo["estado"]): #si el nodo que sacamos de la frontera es la meta pues terminamos con lo que ya hay
             nodo_meta = nodo
             break
-
-        expandidos += 1 
-        nodo["orden"] = expandidos
 
         for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo): #recordemos que la funcion nos devuelve esos 3 valores, entonces por cada operador, nuevo estado y tales que nos devuevla la funcion vamos a hacer la validacion de recorrido 
             

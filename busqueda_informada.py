@@ -37,6 +37,7 @@ def busqueda_avara(mundo):
     pendientes = [raiz]
     visitados = set()
     orden_expansion = 0
+    profundidad_max = 0
     meta = None
 
     while pendientes:
@@ -77,6 +78,7 @@ def busqueda_avara(mundo):
                 costo=nuevo_costo,
                 h=heuristica(nuevo_estado)
             )
+            profundidad_max = max(profundidad_max, hijo["profundidad"])
 
             pendientes.append(hijo)
 
@@ -87,7 +89,7 @@ def busqueda_avara(mundo):
         "meta": meta,
         "nodos_expandidos": orden_expansion,
         "tiempo": tiempo,
-        "profundidad": meta["profundidad"] if meta else None,
+        "profundidad": profundidad_max,
         "costo": meta["costo"] if meta else None
     }
 
@@ -107,6 +109,7 @@ def busqueda_a_estrella(mundo):
     costos_expandidos = {}
 
     orden_expansion = 0
+    profundidad_max = 0
     meta = None
 
     while pendientes:
@@ -164,6 +167,7 @@ def busqueda_a_estrella(mundo):
                     costo=nuevo_costo,
                     h=heuristica(nuevo_estado)
                 )
+                profundidad_max = max(profundidad_max, hijo["profundidad"])
 
                 pendientes.append(hijo)
 
@@ -174,7 +178,7 @@ def busqueda_a_estrella(mundo):
         "meta": meta,
         "nodos_expandidos": orden_expansion,
         "tiempo": tiempo,
-        "profundidad": meta["profundidad"] if meta else None,
+        "profundidad": profundidad_max,
         "costo": meta["costo"] if meta else None
     }
 
