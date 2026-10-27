@@ -31,7 +31,7 @@ Para cada tablero:
       costos, efectos de deposito/avioneta/cultivo) coincide con un simulador
       independiente escrito aqui, comparando transiciones sobre los estados
       alcanzables.
-  H1  La heuristica `busqueda_informada.heuristica` vale 0 en toda meta, es >= 0 y
+  H1  La heuristica `algoritmos.heuristica` vale 0 en toda meta, es >= 0 y
       finita (diapositiva: "h(n) debe ser 0 cuando n es un nodo meta").
   H2  La heuristica es ADMISIBLE: h(n) <= costo real restante h*(n), comprobado en
       TODOS los estados alcanzables (h* por Dijkstra inverso). Tambien se informa si
@@ -117,13 +117,13 @@ ALGORITMOS = [
                      ("algoritmos", "busqueda_profundidad"), ("algoritmos", "dfs")],
          optimo_costo=False, optimo_pasos=False, ciclos_celda=True, muestra_costo=False),
     dict(nombre="Avara",
-         candidatos=[("busqueda_informada", "busqueda_avara"), ("busqueda_informada", "avara")],
+         candidatos=[("algoritmos", "busqueda_avara"), ("algoritmos", "avara")],
          optimo_costo=False, optimo_pasos=False, ciclos_celda=False, muestra_costo=False),
     dict(nombre="A*",
-         candidatos=[("busqueda_informada", "busqueda_a_estrella"), ("busqueda_informada", "a_estrella")],
+         candidatos=[("algoritmos", "busqueda_a_estrella"), ("algoritmos", "a_estrella")],
          optimo_costo=True, optimo_pasos=False, ciclos_celda=False, muestra_costo=True),
 ]
-MODULOS_BUSQUEDA = ("algoritmos", "busqueda_informada")
+MODULOS_BUSQUEDA = ("algoritmos", "algoritmos")
 
 CLAVES_META = ("nodo_meta", "meta")
 CLAVES_EXPANDIDOS = ("expandidos", "nodos_expandidos")
@@ -979,10 +979,10 @@ def evaluar_tablero(ruta: Path, algs, modulos, args) -> ResTablero:
         rt.avisos.append("M1: no se encontro estado.estado_inicial/es_meta/movimientos_y_efectos; modelo sin verificar")
 
     # H1/H2: heuristica
-    bi = modulos.get("busqueda_informada")
+    bi = modulos.get("algoritmos")
     heur = getattr(bi, "heuristica", None) if bi else None
     if heur is None:
-        rt.avisos.append("H: no se encontro busqueda_informada.heuristica; heuristica sin verificar")
+        rt.avisos.append("H: no se encontro algoritmos.heuristica; heuristica sin verificar")
     elif not orac.truncado:
         h = verificar_heuristica(sim, orac, heur)
         rt.info["h"] = h
