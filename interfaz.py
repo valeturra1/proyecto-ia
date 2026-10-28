@@ -4,8 +4,7 @@ import pygame
 
 from mundo import (leer_mundo, TAMANO, OBSTACULO, AGROBOT,
                    CULTIVO_SECO, DEPOSITO, AVIONETA)
-from algoritmos import amplitud, coste_uniforme
-from busqueda_informada import busqueda_avara, busqueda_a_estrella
+from algoritmos import amplitud, coste_uniforme, profundidad, busqueda_avara, busqueda_a_estrella
 
 TAM_CASILLA = 50
 LADO_MUNDO = TAMANO * TAM_CASILLA
@@ -57,6 +56,7 @@ ALGORITMOS_CON_COSTO = ["Costo uniforme", "A*"]
 FUNCIONES = {
     "Amplitud": amplitud,
     "Costo uniforme": coste_uniforme,
+    "Profundidad evitando ciclos": profundidad,
     "Avara": busqueda_avara,
     "A*": busqueda_a_estrella,
 }
@@ -64,8 +64,9 @@ FUNCIONES = {
 CLAVES_RESULTADO = {
     "Amplitud": ("nodo_meta", "expandidos"),
     "Costo uniforme": ("nodo_meta", "expandidos"),
-    "Avara": ("meta", "nodos_expandidos"),
-    "A*": ("meta", "nodos_expandidos"),
+    "Profundidad evitando ciclos": ("nodo_meta", "expandidos"),
+    "Avara": ("nodo_meta", "expandidos"),
+    "A*": ("nodo_meta", "expandidos"),
 }
 
 IMAGEN_DE_CODIGO = {
