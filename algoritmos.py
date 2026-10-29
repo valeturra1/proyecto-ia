@@ -42,29 +42,42 @@ def es_excepcion(estado_padre, estado_hijo, mundo):
     return False #si no cayo en estas excepciones, es una celda ordinaria, continua el flip flip.
 
 """
+Funcion celda_en_historial:
+Esta funcion en escencia sirve para confirmar si una celda ya se encuentra por la rama que me estoy moviendo en determinado
+la logica es: estamos en un nodo, queremos ir a una celda, entonces lo que hacemos es en el while vemos: la posicion del nodo (aka el
+nodo es la misma celda? (estan en el mismo sitio XD)), si NO, validamos si es un reinicio este nodo donde comenzamos busqueda (para si venimos
+de reinicios por casos de excepcion o inicios no hacer toda la busqueda de golpe), ahora, si paso la primer tanda, nos devolvemos por el padre.
+SOLO cambio el nodo, pues ahora el nodo es nodo_padre, con un estado y posicion diferente, PERO seguimos trabajando con la misma CELDA. de esta
+manera nos devolvemos por todos los nodos y posiciones, comparando con la misma celda para corroborar que no la hemos recorrido.
+"""
+def celda_en_historial(nodo, celda): #recibe un nodo y una celda (candidata donde nos moveriamos)
+    """True si la celda ya fue recorrida en la rama de `nodo`, desde el ultimo reinicio."""
+    actual = nodo #definimos la posicion actual con el nodo recibido (donde tamos parados)
+    # ahora en este bucle lo que hacemos es repetir el codigo hasta que sea None (y cuando es none tofi?) cuando llegamos a la raiz
+    # debido a que el apdre de actual sera None (no existe papa de una raiz bruh) 
+    while actual is not None:
+        estado = actual["estado"] #copiamos el estado del nodo actual para sacar su posicion en fil y col
+        if (estado[0], estado[1]) == celda: #comprobamos si en el estado del nodo, su posicion es la misma de la celda 
+            return True #Si si, entonces devolvemos que ya se recorrio
+        if actual["reinicio"]: #si estamos ante un arbol que apenas "nacio", es decir, su historial comienza desde 0 por caso excepcion
+            return False # No esta en historial por que pues, reiniciamos!
+        actual = actual["padre"] #cambiamos actual a su padre (nos devolvemos pa arriba), esto sigue hasta recorrer toooda la rama ;)
+    return False #Si luego de recorrer toda la rama no encontramos nada, devolvemos un false.
 
 """
-def celda_en_historial(nodo, celda):
-    """True si la celda ya fue recorrida en la rama de `nodo`, desde el ultimo reinicio."""
-    actual = nodo
-    while actual is not None:
-        estado = actual["estado"]
-        if (estado[0], estado[1]) == celda:
-            return True
-        if actual["reinicio"]:
-            return False
-        actual = actual["padre"]
-    return False
-
-
+Funcion reconstruir_camino:
+Funcion que permite como su nombre lo indica, reconstruir de movimientos a realizar para la solucion obtenida con determinado algoritmo.
+Esta con un nodo meta (que encontramos y asignamos al hacer en cada algoritmo la validacion de es_meta) nos devolvemos por todos los padres
+hasta llegar a la raiz (donde padre seria None), y vamos recopilando que operador se aplico para cada uo de estos nodos.
+"""
 def reconstruir_camino(nodo_meta):
     """Lista de operadores desde la raiz hasta nodo_meta."""
-    operadores = []
-    nodo = nodo_meta
-    while nodo["padre"] is not None:
-        operadores.append(nodo["operador"])
-        nodo = nodo["padre"]
-    operadores.reverse()
+    operadores = [] 
+    nodo = nodo_meta 
+    while nodo["padre"] is not None: #recorremos padres hasta raiz
+        operadores.append(nodo["operador"]) #almacenamos operador
+        nodo = nodo["padre"] #nos movemos al siguiente padre
+    operadores.reverse() #invertimos la lista, pues al ir de abajo a arriba tendremos de los ultimos movimientos a los primeros.
     return operadores
 
 # funcion HEURISTICA para algoritmos de busqueda informada
