@@ -21,17 +21,25 @@ Funcion validadora, que mira los casos de excepcion del codigo, cuando llegamos 
 - Cultivo seco (TENIENDO FERTILIZANTE!!!!!!!!)
 Si se cumple que estamos en estas celdas de excepcion retornamos un true para marcar
 que debemos de limpiar el camino recorrido
+util? -> es decir que si llega al fertilizante es por que tiene menos de 2, que solo reinicie
+al tomar avioneta primer vez y ademas que solo si el cultivo fue regado.
+(esto evita ciclos en el caso de profundidad, sino se podian dar casos como: avioneta->fertilizante->avioneta->ferti.... etc etc)
 """
 def es_excepcion(estado_padre, estado_hijo, mundo):
-    """True si el hijo llega a una celda que reinicia el historial de la rama."""
-    celda = (estado_hijo[0], estado_hijo[1])
-    if celda == mundo["deposito"]:
+    """True si el hijo llega a una celda que reinicia el historial de la rama.
+    Ojo vivo, ahora solo ocurre si es de forma util"""
+    celda = (estado_hijo[0], estado_hijo[1]) #almacenamos la posicion fila,columna
+    #verificamos si estamos en la celda de deposito Y ADEMAS si la cantidad de fertilizante que obtenemos aumenta despues de tomarlo (fue util xd)
+    if celda == mundo["deposito"] and estado_hijo[2] > estado_padre[2]: 
         return True
-    if celda == mundo["avioneta"]:
+    #verificamos si estamos en la celda de avioneta y ADEMAS si el estado en el que estamos ya tiene marcada la avioneta como usada.
+    #Asi, en caso de usarla, llegar a esta casilla no tiene ningun efecto pues no obtenemos nada.
+    if celda == mundo["avioneta"] and not estado_padre[5]:
         return True
-    if len(estado_hijo[3]) < len(estado_padre[3]):  # si pasa, rego un cultivo seco
+    # Si el numero de fertilizante dismiuye significa que REGAMOS un cultivos seeco
+    if len(estado_hijo[3]) < len(estado_padre[3]): 
         return True
-    return False
+    return False #si no cayo en estas excepciones, es una celda ordinaria, continua el flip flip.
 
 """
 
