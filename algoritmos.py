@@ -238,27 +238,25 @@ def profundidad(mundo):
 #====================================================================================================
 
 #========================= 4. Algoritmo de Busqueda avara =========================
+
 def busqueda_avara(mundo):
     inicio_tiempo = time.perf_counter()
 
     estado = estado_inicial(mundo)
     raiz = crear_nodo(estado, h=heuristica(estado))
 
-    pendientes = [raiz]
+    # Cola de prioridad: menor h(n) primero.
+    # El contador conserva el orden de inserción cuando hay empates.
+    contador = 0
+    pendientes = [(raiz["h"], contador, raiz)]
+
     visitados = set()
     expandidos = 0
     profundidad_max = 0
     nodo_meta = None
 
     while pendientes:
-        # Seleccionar el nodo con menor heurística
-        mejor_indice = 0
-
-        for i in range(1, len(pendientes)):
-            if pendientes[i]["h"] < pendientes[mejor_indice]["h"]:
-                mejor_indice = i
-
-        nodo = pendientes.pop(mejor_indice)
+        _, _, nodo = heapq.heappop(pendientes)
         estado_actual = nodo["estado"]
 
         if estado_actual in visitados:
@@ -288,9 +286,15 @@ def busqueda_avara(mundo):
                 costo=nuevo_costo,
                 h=heuristica(nuevo_estado)
             )
-            profundidad_max = max(profundidad_max, hijo["profundidad"])
 
-            pendientes.append(hijo)
+            profundidad_max = max(
+                profundidad_max, hijo["profundidad"]
+            )
+
+            contador += 1
+            heapq.heappush(
+                pendientes, (hijo["h"], contador, hijo)
+            )
 
     tiempo = time.perf_counter() - inicio_tiempo
 
@@ -308,12 +312,15 @@ def busqueda_a_estrella(mundo):
     estado = estado_inicial(mundo)
     raiz = crear_nodo(estado, h=heuristica(estado))
 
-    pendientes = [raiz]
+    # Cola de prioridad: menor f(n) = g(n) + h(n) primero.
+    # El contador conserva el orden de inserción cuando hay empates.
+    contador = 0
+    pendientes = [(raiz["costo"] + raiz["h"], contador, raiz)]
 
-    # Mejor costo conocido para llegar a cada estado
+    # Mejor costo conocido para llegar a cada estado.
     mejores_costos = {estado: 0}
 
-    # Mejor costo con el que ya se expandió cada estado
+    # Mejor costo con el que ya se expandió cada estado.
     costos_expandidos = {}
 
     expandidos = 0
@@ -321,28 +328,18 @@ def busqueda_a_estrella(mundo):
     nodo_meta = None
 
     while pendientes:
-        # Seleccionar el nodo con menor f(n) = g(n) + h(n)
-        mejor_indice = 0
+        _, _, nodo = heapq.heappop(pendientes)
 
-        for i in range(1, len(pendientes)):
-            f_actual = pendientes[i]["costo"] + pendientes[i]["h"]
-            f_mejor = (
-                pendientes[mejor_indice]["costo"]
-                + pendientes[mejor_indice]["h"]
-            )
-
-            if f_actual < f_mejor:
-                mejor_indice = i
-
-        nodo = pendientes.pop(mejor_indice)
         estado_actual = nodo["estado"]
         costo_actual = nodo["costo"]
 
-        # Ignorar caminos que ya fueron superados por uno más barato
-        if costo_actual > mejores_costos.get(estado_actual, float("inf")):
+        # Ignorar caminos superados por uno más barato.
+        if costo_actual > mejores_costos.get(
+            estado_actual, float("inf")
+        ):
             continue
 
-        # No expandir otra vez si ya se procesó con un costo igual o menor
+        # No expandir otra vez con un costo igual o mayor.
         if costo_actual >= costos_expandidos.get(
             estado_actual, float("inf")
         ):
@@ -362,7 +359,7 @@ def busqueda_a_estrella(mundo):
         ):
             nuevo_costo = costo_actual + costo_mov
 
-            # Solo conservar el camino si mejora el costo conocido
+            # Solo incorporar el estado si encontramos un costo mejor.
             if nuevo_costo < mejores_costos.get(
                 nuevo_estado, float("inf")
             ):
@@ -375,9 +372,17 @@ def busqueda_a_estrella(mundo):
                     costo=nuevo_costo,
                     h=heuristica(nuevo_estado)
                 )
-                profundidad_max = max(profundidad_max, hijo["profundidad"])
 
-                pendientes.append(hijo)
+                profundidad_max = max(
+                    profundidad_max, hijo["profundidad"]
+                )
+
+                contador += 1
+                prioridad = hijo["costo"] + hijo["h"]
+
+                heapq.heappush(
+                    pendientes, (prioridad, contador, hijo)
+                )
 
     tiempo = time.perf_counter() - inicio_tiempo
 
