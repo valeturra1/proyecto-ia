@@ -12,7 +12,8 @@ AVIONETA = 5
 def leer_mundo(ruta):
     lineas = []  # en esta lista se van a guardar las filas del archivo de texto, algo como [1 1 4 1 1 1 5 1 1 1]
 
-    with open(ruta, encoding="utf-8") as f: # abre el archivo y lo cierra al terminar de leer
+    # utf-8-sig lee igual los archivos con o sin BOM (los que guarda el bloc de notas de windows suelen traerlo)
+    with open(ruta, encoding="utf-8-sig") as f: # abre el archivo y lo cierra al terminar de leer
         for linea in f:
             linea = linea.strip()           # le quita espacios en blanco y saltos de linea al principio y al final
             if linea != "":                 # ignora si esta vacio
