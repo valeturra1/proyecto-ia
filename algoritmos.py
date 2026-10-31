@@ -220,40 +220,61 @@ def coste_uniforme(mundo):
 #========================= 3. Algoritmo Profundidad evitando ciclos =========================
 def profundidad(mundo):
     inicio = time.perf_counter()
-
+    
+    # inicializamos el mundo
     raiz = crear_nodo(estado_inicial(mundo))
     raiz["reinicio"] = True  # la raiz abre el historial de la rama
 
+    # por que se maneja como una lista normal? no como deque?
+    # basicamente aqui no necesitamos ir expandiendo por "niveles" del arbol cada generacion de nodos (como lo haciamos en amplitud)
+    # en profundidad, la escencia de este algoritmo es agarrar una rama y comenzar a expandir a lo loco por esa misma rama hata que
+    # lleguemos a un final o encontremos solucion. (por eso en clase veiamos que se ve "recargada a la izquierda"), por que profundizamos
+    # al maximo con una rama y nodo y ya lueguito es que pasamos al otro hijo de por alla la primer generacion.
     pila = [raiz]
     expandidos = 0
     profundidad_max = 0
     nodo_meta = None
 
+    #mientras tengamos nodos pendientes y no encontremos la meta
     while pila and nodo_meta is None:
+        # sacamos el primer elemento y comenzamos a expandir
         nodo = pila.pop()
         expandidos += 1
         nodo["orden"] = expandidos
 
+        # corroboramos si este es la solucion primero
         if es_meta(nodo["estado"]):
             nodo_meta = nodo
             break
 
         hijos = []
+        # ahora calculamos los movimientos posibles que puede realizar este elemento
         for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo):
             celda = (estado_hijo[0], estado_hijo[1])
+            
+            #verificamos que este operador que intentamos aplicar no este en el historial como usado
             if celda_en_historial(nodo, celda):
                 continue
 
+            #si pasa como celda no usada, creamos el hijo con su informacion actualizada.                    
             hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov)
             hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo)
             profundidad_max = max(profundidad_max, hijo["profundidad"])
 
-            hijos.append(hijo)
+            # metemos el hijo a la lista (va quedando a la derecha del todo como ultimo elemento añadido)
+            hijos.append(hijo)  
 
-        # se apilan en orden inverso para que el primer operador
-        # (el más a la izquierda del árbol) sea el primero en salir
+        # se apilan en orden inverso para que el primer operador (el más a la izquierda del árbol) sea el primero en salir.
+        # es decir, suponiendo que en la primer expansion de raiz podamos hacer arriba, abajo, izquierda y derecha tendriamos pila VACIA
+        # de momento, y la lista de hijos = [A,I,D]. pero cuando termina for, si no hicieramos reversed,  la siguiente iteracion del while
+        #saca con .pop() el ultimo (D), entonces seria profundidad PARA LA DERECHA XD. con el curso lo hacemos hacia izquierda, entonces basta
+        # con almacenar todo en el orden inverso para obtener nuestro resultado del curso. quedando: pila = hijos = [D,I,A], y ahora si flip flip
+        # cuando hagamos pop sacamos A, y nos vamos por esa profundidad a la izquierda!! esta logica sigue para el resto de generaciones
+        # ejem ejem aclaracion esto es en base a como se definieron el orden de operadores: arriba, abajo, izquierda, derecha jejejjej
+        # como guardamos hijos en una lista [], extend lo limpia para que al guardarlo en pila no queden () basura
         pila.extend(reversed(hijos))
 
+    # devolvemos datos de resultados.
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
