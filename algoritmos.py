@@ -110,37 +110,54 @@ def heuristica(estado):
 #====================================================================================================
 
 #========================= 1. Algoritmo Amplitud =========================
-def amplitud(mundo):
+def amplitud(mundo): # recibimos el munddo como contexto
     inicio = time.perf_counter()
 
+    # Se hace la inicializacion de variables. creamos la raiz del arbol, definimos el nodo raiz como reinicio pues comienza con un
+    # historial nuevo.
     raiz = crear_nodo(estado_inicial(mundo))
     raiz["reinicio"] = True  # la raiz abre el historial de la rama
 
+    # se crea una cola para guardar los nodos
     cola = deque([raiz])
+    #Ademas, inicializamos las variables (expandidos, profundidad maxima y nodo_meta son plenamente para almacenar datos requeridos)
     expandidos = 0
     profundidad_max = 0
-    nodo_meta = None
+    nodo_meta = None #None hasta que sepamos cual es (se sabra en la verificacion de es_meta)
 
+    #ciclo while que se repite mientras que la cola de nodos NO este vacia y que NO hayamos encontrado el nodo solucion.
     while cola and nodo_meta is None:
-        nodo = cola.popleft()
-        expandidos += 1
-        nodo["orden"] = expandidos
+        nodo = cola.popleft() #sacamos el nodo mas viejo en la cola, la primera vez sera raiz y lo cuenta como expandido.
+        expandidos += 1 
+        nodo["orden"] = expandidos #cada nodo va llevando el numero acumulado de nodos expandidos
 
+        #Hacemos la validacion de este nodo que sacamos de la cola es la meta o no.
         if es_meta(nodo["estado"]):
             nodo_meta = nodo
-            break
+            break #si lo es, salimos del bucle.
 
+        # Ahora lo que haremos es la generacion de los nodos hijos como tal. 
+        # para cada operador (arriba, abajo, izquierda o derehca)
+        # para cada estado hijo (como queda el robot luego de hacer determinado operador)
+        # tendremos el costo de hacer el movimiento de este determinado operador
         for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo):
+            # para cada movimienot posible (operador aplicable) nosotros sacamos su posicion en matriz
             celda = (estado_hijo[0], estado_hijo[1])
+
+            # si ya lo recorrimos en esa rama (evitar ciclines) saltamos esta iteracion
             if celda_en_historial(nodo, celda):
                 continue
 
+            # si no lo recorrimos, creamos un nuevo nodo con: estado_hijo (sale de aplicar ese operador en mov_y_efect...)
+            # con el nodo actual, el operador que acaba de hacer y el costo acumulado (+ el que se acaba de hacer con dicho operador que se hizo resien)
             hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov)
-            hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo)
-            profundidad_max = max(profundidad_max, hijo["profundidad"])
+            hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo) # miramos si esta posicion es causa de excepcion y reinicio
+            profundidad_max = max(profundidad_max, hijo["profundidad"]) #aumentamos la profundidad
 
-            cola.append(hijo)
+            cola.append(hijo) #la cola almacena este nuevo hijo.
 
+    # una vez llegamos a la solucion en una de nuestras muchas ramas y nodos, salimos con ese break en es_meta
+    # y devolvemos los valores requeridos en el taller, los q estan aqui abajito con el estatus del algoritmo actualmente.
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
