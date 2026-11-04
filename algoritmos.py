@@ -295,13 +295,13 @@ def busqueda_avara(mundo):
 
     estado = estado_inicial(mundo)
     raiz = crear_nodo(estado, h=heuristica(estado))
+    raiz["reinicio"] = True
 
     # Cola de prioridad: menor h(n) primero.
     # El contador conserva el orden de inserción cuando hay empates.
     contador = 0
     pendientes = [(raiz["h"], contador, raiz)]
 
-    visitados = set()
     expandidos = 0
     profundidad_max = 0
     nodo_meta = None
@@ -310,10 +310,6 @@ def busqueda_avara(mundo):
         _, _, nodo = heapq.heappop(pendientes)
         estado_actual = nodo["estado"]
 
-        if estado_actual in visitados:
-            continue
-
-        visitados.add(estado_actual)
 
         expandidos += 1
         nodo["orden"] = expandidos
@@ -325,7 +321,13 @@ def busqueda_avara(mundo):
         for operador, nuevo_estado, costo_mov in movimientos_y_efectos(
             estado_actual, mundo
         ):
-            if nuevo_estado in visitados:
+            celda = (nuevo_estado[0], nuevo_estado[1])
+
+            reinicio = es_excepcion(
+                estado_actual, nuevo_estado, mundo
+            )
+
+            if not reinicio and celda_en_historial(nodo, celda):
                 continue
 
             nuevo_costo = nodo["costo"] + costo_mov
@@ -337,6 +339,8 @@ def busqueda_avara(mundo):
                 costo=nuevo_costo,
                 h=heuristica(nuevo_estado)
             )
+
+            hijo["reinicio"] = reinicio
 
             profundidad_max = max(
                 profundidad_max, hijo["profundidad"]
@@ -362,16 +366,13 @@ def busqueda_a_estrella(mundo):
 
     estado = estado_inicial(mundo)
     raiz = crear_nodo(estado, h=heuristica(estado))
+    raiz["reinicio"] = True
 
     # Cola de prioridad: menor f(n) = g(n) + h(n) primero.
-    # El contador conserva el orden de inserción cuando hay empates.
     contador = 0
     pendientes = [(raiz["costo"] + raiz["h"], contador, raiz)]
 
-    # Mejor costo conocido para llegar a cada estado.
     mejores_costos = {estado: 0}
-
-    # Mejor costo con el que ya se expandió cada estado.
     costos_expandidos = {}
 
     expandidos = 0
@@ -380,17 +381,14 @@ def busqueda_a_estrella(mundo):
 
     while pendientes:
         _, _, nodo = heapq.heappop(pendientes)
-
         estado_actual = nodo["estado"]
         costo_actual = nodo["costo"]
 
-        # Ignorar caminos superados por uno más barato.
         if costo_actual > mejores_costos.get(
             estado_actual, float("inf")
         ):
             continue
 
-        # No expandir otra vez con un costo igual o mayor.
         if costo_actual >= costos_expandidos.get(
             estado_actual, float("inf")
         ):
@@ -408,9 +406,17 @@ def busqueda_a_estrella(mundo):
         for operador, nuevo_estado, costo_mov in movimientos_y_efectos(
             estado_actual, mundo
         ):
+            celda = (nuevo_estado[0], nuevo_estado[1])
+
+            reinicio = es_excepcion(
+                estado_actual, nuevo_estado, mundo
+            )
+
+            if not reinicio and celda_en_historial(nodo, celda):
+                continue
+
             nuevo_costo = costo_actual + costo_mov
 
-            # Solo incorporar el estado si encontramos un costo mejor.
             if nuevo_costo < mejores_costos.get(
                 nuevo_estado, float("inf")
             ):
@@ -423,6 +429,8 @@ def busqueda_a_estrella(mundo):
                     costo=nuevo_costo,
                     h=heuristica(nuevo_estado)
                 )
+
+                hijo["reinicio"] = reinicio
 
                 profundidad_max = max(
                     profundidad_max, hijo["profundidad"]
