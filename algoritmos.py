@@ -173,8 +173,8 @@ def coste_uniforme(mundo):
     raiz = crear_nodo(estado_inicial(mundo)) # creamos el nodo inicial :>
     raiz["reinicio"] = True # es lo que habia implementado juan jose de reinicio cuando riega y asi
 
-    contador = 0 # el desempate definitico 
-    frontera = [(0, 0, contador, raiz)] # edtructura que vamos a usar para gaurdar todos los noddos que ya genere
+    contador = 0 # el desempate definitivo 
+    frontera = [(0, 0, contador, raiz)] # estructura que vamos a usar para gaurdar todos los noddos que ya genere
     expandidos = 0 #el que adivine que significa esto se gana un premio
     profundidad_max = 0
     nodo_meta = None 
