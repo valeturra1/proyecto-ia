@@ -38,13 +38,6 @@ Todos viven en `algoritmos.py` y devuelven un diccionario con `nodo_meta`, `expa
 | Informada | Avara | `busqueda_avara` | Cola de prioridad por `h(n)` |
 | Informada | A* | `busqueda_a_estrella` | Cola de prioridad por `f(n) = g(n) + h(n)` |
 
-**Notas:**
-
-- **Amplitud:** encuentra la solución de menor profundidad.
-- **Costo uniforme:** encuentra la solución de menor costo.
-- **Profundidad:** expande primero por la izquierda según el orden de operadores.
-- **Avara:** no garantiza optimalidad.
-- **A\*:** es óptima porque la heurística es admisible.
 
 **Orden de operadores:** arriba, abajo, izquierda, derecha.
 
