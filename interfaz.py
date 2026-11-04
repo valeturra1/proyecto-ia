@@ -20,20 +20,21 @@ ALTO_BARRA = 34
 ANCHO_VENTANA = X_PANEL + ANCHO_PANEL + MARGEN
 ALTO_VENTANA = Y_BARRA + ALTO_BARRA + 8
 
-FONDO = (226, 208, 170)
-FONDO_HOVER = (212, 191, 148)
-VACIO = (214, 196, 160)
-TINTA = (52, 36, 24)
-TINTA_SUAVE = (112, 90, 66)
-LINEA = (170, 142, 104)
-LINEA_FUERTE = (120, 92, 60)
-PERGAMINO = (246, 235, 210)
-BURDEOS = (120, 28, 36)
-BURDEOS_HOVER = (148, 40, 50)
-GRIS_BOTON = (170, 156, 134)
+# Paleta: pergamino claro, tinta oscura, burdeos y oro apagado como únicos acentos
+FONDO = (238, 226, 196)
+FONDO_HOVER = (221, 202, 160)
+VACIO = (228, 212, 176)
+TINTA = (36, 24, 16)
+TINTA_SUAVE = (84, 62, 42)
+LINEA = (160, 130, 92)
+LINEA_FUERTE = (110, 82, 52)
+PERGAMINO = (248, 240, 221)
+BURDEOS = (104, 22, 30)
+BURDEOS_HOVER = (140, 42, 52)
+GRIS_BOTON = (150, 136, 114)
 ROJO = (150, 30, 30)
-ORO = (184, 140, 52)
-MADERA = (74, 50, 32)
+ORO = (190, 146, 52)
+MADERA = (62, 44, 30)
 
 ALGORITMOS = {
     "No informada": ["Amplitud", "Costo uniforme", "Profundidad evitando ciclos"],
@@ -116,21 +117,12 @@ def dibujar_rombo(pantalla, centro, radio, color, grosor=0):
     pygame.draw.polygon(pantalla, color, puntos, grosor)
 
 
-def dibujar_rect_punteado(pantalla, rect, color):
-    paso = 14
-    for x in range(rect.left, rect.right, paso):
-        fin = min(x + 8, rect.right)
-        pygame.draw.line(pantalla, color, (x, rect.top), (fin, rect.top), 2)
-        pygame.draw.line(pantalla, color, (x, rect.bottom - 1), (fin, rect.bottom - 1), 2)
-    for y in range(rect.top, rect.bottom, paso):
-        fin = min(y + 8, rect.bottom)
-        pygame.draw.line(pantalla, color, (rect.left, y), (rect.left, fin), 2)
-        pygame.draw.line(pantalla, color, (rect.right - 1, y), (rect.right - 1, fin), 2)
-
-
 def dibujar_separador(pantalla, x1, x2, y):
-    pygame.draw.line(pantalla, LINEA, (x1, y), (x2, y), 1)
-    dibujar_rombo(pantalla, ((x1 + x2) // 2, y), 4, ORO)
+    # línea fina con un único rombo central, como remate de manuscrito
+    centro = (x1 + x2) // 2
+    pygame.draw.line(pantalla, LINEA, (x1, y), (centro - 10, y), 1)
+    pygame.draw.line(pantalla, LINEA, (centro + 10, y), (x2, y), 1)
+    dibujar_rombo(pantalla, (centro, y), 3, ORO)
 
 
 def ajustar_imagen(original, lado, rellenar=False):
@@ -226,26 +218,21 @@ def dibujar_reporte(pantalla, fuentes, reporte):
     total = len(datos) * ancho_ficha + (len(datos) - 1) * separacion
     x = ANCHO_VENTANA - MARGEN - total
     for etiqueta, valor in datos:
-        rect = pygame.Rect(x, 10, ancho_ficha, 54)
+        rect = pygame.Rect(x, 12, ancho_ficha, 50)
         pygame.draw.rect(pantalla, PERGAMINO, rect, border_radius=3)
-        pygame.draw.rect(pantalla, ORO, rect, 2, border_radius=3)
         etiqueta = recortar(etiqueta, fuentes["etiqueta"], ancho_ficha - 10)
-        dibujar_texto_centrado(pantalla, fuentes["etiqueta"], etiqueta, rect.centerx, rect.top + 6, TINTA_SUAVE)
-        dibujar_texto_centrado(pantalla, fuentes["valor"], valor, rect.centerx, rect.top + 25, BURDEOS)
+        dibujar_texto_centrado(pantalla, fuentes["etiqueta"], etiqueta, rect.centerx, rect.top + 5, TINTA_SUAVE)
+        dibujar_texto_centrado(pantalla, fuentes["valor"], valor, rect.centerx, rect.top + 22, BURDEOS)
         x += ancho_ficha + separacion
 
 
 def dibujar_encabezado(pantalla, fuentes, imagenes, reporte):
-    pygame.draw.rect(pantalla, MADERA, (0, 0, ANCHO_VENTANA, ALTO_ENCABEZADO - 4))
-    pygame.draw.line(pantalla, ORO, (0, ALTO_ENCABEZADO - 4), (ANCHO_VENTANA, ALTO_ENCABEZADO - 4), 3)
-    pygame.draw.line(pantalla, LINEA_FUERTE, (0, ALTO_ENCABEZADO - 1), (ANCHO_VENTANA, ALTO_ENCABEZADO - 1), 2)
-    marco = pygame.Rect(MARGEN - 4, 10, 60, 60)
-    pygame.draw.rect(pantalla, PERGAMINO, marco, border_radius=4)
-    pygame.draw.rect(pantalla, ORO, marco, 2, border_radius=4)
-    pantalla.blit(imagenes["logo"], (MARGEN, 14))
-    dibujar_texto(pantalla, fuentes["titulo"], "CampesinoBot", MARGEN + 70, 6, ORO)
+    pygame.draw.rect(pantalla, MADERA, (0, 0, ANCHO_VENTANA, ALTO_ENCABEZADO - 3))
+    pygame.draw.line(pantalla, ORO, (0, ALTO_ENCABEZADO - 3), (ANCHO_VENTANA, ALTO_ENCABEZADO - 3), 2)
+    pantalla.blit(imagenes["logo"], (MARGEN, 12))
+    dibujar_texto(pantalla, fuentes["titulo"], "CampesinoBot", MARGEN + 68, 6, ORO)
     dibujar_texto(pantalla, fuentes["suave"], "Búsqueda para domar bestias",
-                  MARGEN + 72, 50, PERGAMINO)
+                  MARGEN + 70, 50, PERGAMINO)
     if reporte is not None:
         dibujar_reporte(pantalla, fuentes, reporte)
 
@@ -256,19 +243,16 @@ def dibujar_mundo(pantalla, fuentes, matriz, imagenes, vista):
 
     if matriz is None:
         pygame.draw.rect(pantalla, VACIO, marco, border_radius=4)
-        dibujar_rect_punteado(pantalla, marco, LINEA_FUERTE)
+        pygame.draw.rect(pantalla, LINEA, marco, 1, border_radius=4)
         cx = marco.centerx
-        cy = marco.centery - 30
-        pygame.draw.rect(pantalla, LINEA_FUERTE, (cx - 6, cy - 26, 12, 28))
-        pygame.draw.polygon(pantalla, LINEA_FUERTE, [(cx - 18, cy), (cx + 18, cy), (cx, cy + 20)])
-        pygame.draw.line(pantalla, LINEA_FUERTE, (cx - 24, cy + 32), (cx + 24, cy + 32), 3)
-        dibujar_texto_centrado(pantalla, fuentes["seccion"], "Suelta aquí el archivo .txt del mundo", cx, cy + 52)
-        dibujar_texto_centrado(pantalla, fuentes["suave"], "o ábrelo con: python interfaz.py mundo.txt",
-                               cx, cy + 82, TINTA_SUAVE)
+        cy = marco.centery - 14
+        dibujar_rombo(pantalla, (cx, cy - 26), 7, ORO)
+        dibujar_texto_centrado(pantalla, fuentes["seccion"], "Suelta aquí el archivo .txt del mundo", cx, cy)
+        dibujar_texto_centrado(pantalla, fuentes["suave"], "o pulsa el botón «Cargar mundo»",
+                               cx, cy + 30, TINTA_SUAVE)
         return
 
     pygame.draw.rect(pantalla, MADERA, marco, border_radius=4)
-    pygame.draw.rect(pantalla, ORO, marco.inflate(-6, -6), 2, border_radius=3)
     for i in range(TAMANO):
         for j in range(TAMANO):
             rect = pygame.Rect(X_MUNDO + j * TAM_CASILLA, Y_MUNDO + i * TAM_CASILLA,
@@ -291,10 +275,10 @@ def dibujar_mundo(pantalla, fuentes, matriz, imagenes, vista):
 def dibujar_segmento(pantalla, fuente, rect, texto, activo, hover):
     if activo:
         pygame.draw.rect(pantalla, BURDEOS, rect, border_radius=3)
-        pygame.draw.rect(pantalla, ORO, rect, 2, border_radius=3)
         color = PERGAMINO
     else:
-        pygame.draw.rect(pantalla, FONDO_HOVER if hover else PERGAMINO, rect, border_radius=3)
+        if hover:
+            pygame.draw.rect(pantalla, FONDO_HOVER, rect, border_radius=3)
         pygame.draw.rect(pantalla, LINEA_FUERTE, rect, 1, border_radius=3)
         color = TINTA
     imagen = fuente.render(texto, True, color)
@@ -306,10 +290,9 @@ def dibujar_opcion(pantalla, fuente, rect, texto, activa, hover):
         pygame.draw.rect(pantalla, FONDO_HOVER, rect, border_radius=3)
     centro = (rect.left + 16, rect.centery)
     if activa:
-        dibujar_rombo(pantalla, centro, 9, ORO)
-        dibujar_rombo(pantalla, centro, 6, BURDEOS)
+        dibujar_rombo(pantalla, centro, 7, BURDEOS)
     else:
-        dibujar_rombo(pantalla, centro, 8, LINEA_FUERTE, 2)
+        dibujar_rombo(pantalla, centro, 6, LINEA_FUERTE, 1)
     texto = recortar(texto, fuente, rect.width - 40)
     imagen = fuente.render(texto, True, BURDEOS if activa else TINTA)
     pantalla.blit(imagen, (rect.left + 34, rect.centery - imagen.get_height() // 2))
@@ -323,7 +306,6 @@ def dibujar_boton_principal(pantalla, fuente, rect, texto, habilitado, hover):
     else:
         color = BURDEOS
     pygame.draw.rect(pantalla, color, rect, border_radius=3)
-    pygame.draw.rect(pantalla, ORO if habilitado else LINEA_FUERTE, rect, 2, border_radius=3)
     imagen = fuente.render(texto, True, PERGAMINO)
     total = 12 + 10 + imagen.get_width()
     x0 = rect.centerx - total // 2
@@ -338,7 +320,7 @@ def dibujar_panel(pantalla, fuentes, app, pos_mouse, imagenes):
     ancho = ANCHO_PANEL
     y = Y_MUNDO
 
-    pygame.draw.line(pantalla, LINEA_FUERTE, (X_DIVISOR, Y_MUNDO), (X_DIVISOR, Y_MUNDO + LADO_MUNDO), 2)
+    pygame.draw.line(pantalla, LINEA, (X_DIVISOR, Y_MUNDO), (X_DIVISOR, Y_MUNDO + LADO_MUNDO), 1)
 
     dibujar_texto(pantalla, fuentes["seccion"], "Tipo de búsqueda", x, y, BURDEOS)
     y += 26
@@ -367,7 +349,19 @@ def dibujar_panel(pantalla, fuentes, app, pos_mouse, imagenes):
     dibujar_separador(pantalla, x, x + ancho, y)
     y += 16
 
-    rect = pygame.Rect(x, y, ancho, 44)
+    ancho_cargar = 190
+    rect_cargar = pygame.Rect(x, y, ancho_cargar, 44)
+    if busqueda_en_curso(app):
+        # deshabilitado: no se puede cargar otro mundo mientras se busca o se anima la solución
+        pygame.draw.rect(pantalla, GRIS_BOTON, rect_cargar, border_radius=3)
+        imagen = fuentes["normal"].render("Cargar mundo", True, PERGAMINO)
+        pantalla.blit(imagen, imagen.get_rect(center=rect_cargar.center))
+    else:
+        dibujar_segmento(pantalla, fuentes["normal"], rect_cargar, "Cargar mundo",
+                         False, rect_cargar.collidepoint(pos_mouse))
+        regiones.append((rect_cargar, "cargar", None))
+
+    rect = pygame.Rect(x + ancho_cargar + 8, y, ancho - ancho_cargar - 8, 44)
     dibujar_boton_principal(pantalla, fuentes["boton"], rect, "Iniciar búsqueda",
                             app["mundo"] is not None, rect.collidepoint(pos_mouse))
     regiones.append((rect, "iniciar", None))
@@ -385,18 +379,18 @@ def dibujar_panel(pantalla, fuentes, app, pos_mouse, imagenes):
         pantalla.blit(imagenes["chicas"]["tierra"], muestra.topleft)
         if clave != "tierra":
             pantalla.blit(imagenes["chicas"][clave], muestra.topleft)
-        pygame.draw.rect(pantalla, LINEA_FUERTE, muestra, 1)
+        pygame.draw.rect(pantalla, LINEA, muestra, 1)
         texto = recortar(nombre, fuentes["chica"], ancho_columna - 44)
-        dibujar_texto(pantalla, fuentes["chica"], texto, cx + 38, cy + 7)
+        dibujar_texto(pantalla, fuentes["chica"], texto, cx + 38, cy + 6, TINTA)
 
     return regiones
 
 
 def dibujar_barra(pantalla, fuentes, mensaje):
-    pygame.draw.line(pantalla, LINEA_FUERTE, (X_MUNDO - 8, Y_BARRA - 7),
-                     (ANCHO_VENTANA - MARGEN + 8, Y_BARRA - 7), 2)
+    pygame.draw.line(pantalla, LINEA, (X_MUNDO - 8, Y_BARRA - 7),
+                     (ANCHO_VENTANA - MARGEN + 8, Y_BARRA - 7), 1)
     es_error = mensaje.startswith("Error")
-    dibujar_rombo(pantalla, (X_MUNDO + 6, Y_BARRA + ALTO_BARRA // 2 - 2), 6, ROJO if es_error else ORO)
+    dibujar_rombo(pantalla, (X_MUNDO + 6, Y_BARRA + ALTO_BARRA // 2 - 2), 4, ROJO if es_error else ORO)
     texto = recortar(mensaje, fuentes["normal"], ANCHO_VENTANA - 2 * MARGEN - 24)
     dibujar_texto(pantalla, fuentes["normal"], texto, X_MUNDO + 20, Y_BARRA + 5,
                   ROJO if es_error else TINTA)
@@ -410,7 +404,31 @@ def cargar(app, ruta):
         return
     app["animacion"] = None
     app["reporte"] = None
+    app["carpeta_archivos"] = os.path.dirname(os.path.abspath(ruta))
     app["mensaje"] = "Mundo cargado: " + ruta
+
+
+def elegir_archivo(carpeta_inicial):
+    # Abre el selector de archivos del sistema (tkinter viene con Python).
+    # Devuelve (ruta, error): ruta es "" si el usuario cancela; error es None salvo que no se pueda abrir el selector.
+    try:
+        import tkinter
+        from tkinter import filedialog
+        raiz = tkinter.Tk()
+        raiz.withdraw()
+        try:
+            raiz.attributes("-topmost", True)
+            ruta = filedialog.askopenfilename(
+                parent=raiz,
+                title="Selecciona el archivo del mundo",
+                initialdir=carpeta_inicial,
+                filetypes=[("Mundo (.txt)", "*.txt"), ("Todos los archivos", "*.*")],
+            )
+        finally:
+            raiz.destroy()
+    except Exception as error:
+        return "", str(error)
+    return (str(ruta) if ruta else ""), None
 
 
 def hallar_raiz(resultado, meta):
@@ -516,15 +534,27 @@ def vista_actual(app):
     animacion = app["animacion"]
     if animacion is None:
         return None
-    estado = animacion["estados"][animacion["indice"]]
+    indice = animacion["indice"]
+    estado = animacion["estados"][indice]
+    # El ultimo movimiento hecho sobre la avioneta deja el combustible en 0 al llegar,
+    # asi que tambien se dibuja la mula si el robot tenia combustible antes de ese movimiento.
+    en_mula = estado[4] > 0 or (indice > 0 and animacion["estados"][indice - 1][4] > 0)
     return {
         "fila": estado[0],
         "col": estado[1],
         "pendientes": estado[3],
-        "en_mula": estado[4] > 0,
+        "en_mula": en_mula,
         "con_espada": estado[2] > 0,
         "mula_usada": estado[5],
     }
+
+
+def busqueda_en_curso(app):
+    # True mientras se calcula la búsqueda o mientras se reproduce su animación
+    if app["buscar"]:
+        return True
+    animacion = app["animacion"]
+    return animacion is not None and animacion["indice"] < len(animacion["estados"]) - 1
 
 
 def procesar_evento(app, evento, regiones):
@@ -532,7 +562,10 @@ def procesar_evento(app, evento, regiones):
         return False
 
     if evento.type == pygame.DROPFILE:
-        cargar(app, evento.file)
+        if busqueda_en_curso(app):
+            app["mensaje"] = "Espera a que termine la búsqueda para cargar otro mundo."
+        else:
+            cargar(app, evento.file)
 
     if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
         for rect, clase, valor in regiones:
@@ -542,9 +575,12 @@ def procesar_evento(app, evento, regiones):
                     app["algoritmo"] = ALGORITMOS[valor][0]
                 elif clase == "algoritmo":
                     app["algoritmo"] = valor
+                elif clase == "cargar":
+                    app["mensaje"] = "Selecciona el archivo .txt del mundo..."
+                    app["elegir"] = True
                 elif clase == "iniciar":
                     if app["mundo"] is None:
-                        app["mensaje"] = "Primero carga un mundo: arrastra el archivo .txt a la ventana"
+                        app["mensaje"] = "Primero carga un mundo: pulsa «Cargar mundo» o arrastra el archivo .txt a la ventana"
                     elif app["algoritmo"] not in FUNCIONES:
                         app["mensaje"] = app["algoritmo"] + " aún no está implementado"
                     else:
@@ -570,7 +606,7 @@ def main():
         "seccion": crear_fuente(serif, 19, True),
         "normal": crear_fuente(serif, 18),
         "boton": crear_fuente(serif, 19, True),
-        "chica": crear_fuente(serif, 15),
+        "chica": crear_fuente(serif, 17),
         "etiqueta": crear_fuente(serif, 14),
         "valor": crear_fuente(serif, 22, True),
     }
@@ -579,8 +615,10 @@ def main():
         "mundo": None,
         "tipo": "No informada",
         "algoritmo": ALGORITMOS["No informada"][0],
-        "mensaje": "Arrastre un archivo .txt a la ventana para cargar el mundo.",
+        "mensaje": "Pulse «Cargar mundo» o arrastre un archivo .txt a la ventana.",
         "buscar": False,
+        "elegir": False,
+        "carpeta_archivos": None,
         "animacion": None,
         "reporte": None,
     }
@@ -623,9 +661,30 @@ def main():
 
         pygame.display.flip()
 
+        if app["elegir"] and busqueda_en_curso(app):
+            app["elegir"] = False
+        if app["elegir"]:
+            app["elegir"] = False
+            carpeta = app["carpeta_archivos"]
+            if carpeta is None:
+                carpeta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pruebas")
+                if not os.path.isdir(carpeta):
+                    carpeta = os.path.dirname(os.path.abspath(__file__))
+            ruta, error = elegir_archivo(carpeta)
+            # descarta los clics que se acumularon mientras estaba abierto el selector
+            pygame.event.clear([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP])
+            if error is not None:
+                app["mensaje"] = "Error: no se pudo abrir el selector de archivos, arrastra el .txt a la ventana"
+            elif ruta == "":
+                app["mensaje"] = "Carga cancelada."
+            else:
+                cargar(app, ruta)
+
         if app["buscar"]:
             app["buscar"] = False
             ejecutar_busqueda(app)
+            # descarta los clics y archivos soltados mientras la ventana estaba ocupada buscando
+            pygame.event.clear([pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.DROPFILE])
 
         reloj.tick(30)
 
