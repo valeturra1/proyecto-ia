@@ -167,54 +167,56 @@ def amplitud(mundo): # recibimos el munddo como contexto
 
 
 #========================= 2. Algoritmo de Costo uniforme =========================
+# Se expande siempre el nodo de menor costo acumulado g(n), sin importar la profundidad.
 def coste_uniforme(mundo):
     inicio = time.perf_counter() #pa medir tiempo
 
     raiz = crear_nodo(estado_inicial(mundo)) # creamos el nodo inicial :>
     raiz["reinicio"] = True # es lo que habia implementado juan jose de reinicio cuando riega y asi
 
-    contador = 0 # el desempate definitivo 
-    frontera = [(0, 0, contador, raiz)] # estructura que vamos a usar para gaurdar todos los noddos que ya genere
-    expandidos = 0 #el que adivine que significa esto se gana un premio
+    # desempate FIFO: con el mismo g(n) sale primero el nodo que se genero antes
+    # con costos iguales, se comporta como busqueda por amplitud (como dice el profesor)
+    contador = 0
+    frontera = [(0, contador, raiz)] # cola de prioridad: (costo, orden de generacion, nodo)
+    expandidos = 0
     profundidad_max = 0
-    nodo_meta = None 
+    nodo_meta = None # sigue en None si no hay solucion
 
 
     while frontera: #mientras haya algo en frontera pues trin
-        _,_,_,nodo = heapq.heappop(frontera) #cola de prioridad :3 es para que siempre saque el que tiene menor coste sin improtar el orden en el que se ingresan a la cola
+        _, _, nodo = heapq.heappop(frontera) # sale el de menor costo. en empate, el primero que entro
 
-        expandidos += 1 
+        expandidos += 1
         nodo["orden"] = expandidos
 
-        if es_meta(nodo["estado"]): #si el nodo que sacamos de la frontera es la meta pues terminamos con lo que ya hay
+        # la meta se prueba al expandir, no al generar
+        if es_meta(nodo["estado"]):
             nodo_meta = nodo
             break
 
-        for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo): #recordemos que la funcion nos devuelve esos 3 valores, entonces por cada operador, nuevo estado y tales que nos devuevla la funcion vamos a hacer la validacion de recorrido 
-            
+        for operador, estado_hijo, costo_mov in movimientos_y_efectos(nodo["estado"], mundo):
+
             # lo que hizo juan jose para evitar ciclos
-            celda = (estado_hijo[0], estado_hijo[1]) # definimos la celda 
+            celda = (estado_hijo[0], estado_hijo[1])
 
             if celda_en_historial(nodo, celda):
                 continue
 
-            # creo el hijo con el operador ligado a su padre y me voy quedando con la profundidad maxima mientras voy expandiendo
-            hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov) #
+            # g(hijo) = costo del padre + costo del movimiento
+            hijo = crear_nodo(estado_hijo, nodo, operador, nodo["costo"] + costo_mov)
             hijo["reinicio"] = es_excepcion(nodo["estado"], estado_hijo, mundo)
             profundidad_max = max(profundidad_max, hijo["profundidad"])
 
-            # aqui meto el hijo a la cola de espera, o sea a la de frontera
-            contador += 1 
-            heapq.heappush(frontera, (hijo["costo"], ORDEN_OPERADORES[operador], contador, hijo))
+            # el contador crece en cada insercion: el que entra primero tiene numero menor
+            contador += 1
+            heapq.heappush(frontera, (hijo["costo"], contador, hijo))
 
-    #retorno la meta para recontruir el arbol con las dema metricas
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
         "profundidad": profundidad_max,
         "tiempo": time.perf_counter() - inicio,
     }
-
 
 
 #========================= 3. Algoritmo Profundidad evitando ciclos =========================
