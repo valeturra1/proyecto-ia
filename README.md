@@ -137,11 +137,6 @@ Ejecuta los 5 algoritmos sobre un mundo e imprime las métricas y el camino:
 python algoritmos.py pruebas/tablero.txt
 ```
 
-Para validar solo la lectura de un mundo:
-
-```bash
-python mundo.py pruebas/tablero.txt
-```
 
 ## Formato del archivo de mundo
 
