@@ -174,8 +174,8 @@ def coste_uniforme(mundo):
     raiz = crear_nodo(estado_inicial(mundo)) # creamos el nodo inicial :>
     raiz["reinicio"] = True # es lo que habia implementado juan jose de reinicio cuando riega y asi
 
-    # Desempate FIFO: con el mismo g(n) sale primero el nodo que se genero antes.
-    # Asi, con costos iguales, se comporta como busqueda por amplitud (como dice el profesor).
+    # desempate FIFO: con el mismo g(n) sale primero el nodo que se genero antes
+    # con costos iguales, se comporta como busqueda por amplitud (como dice el profesor)
     contador = 0
     frontera = [(0, contador, raiz)] # cola de prioridad: (costo, orden de generacion, nodo)
     expandidos = 0
@@ -184,12 +184,12 @@ def coste_uniforme(mundo):
 
 
     while frontera: #mientras haya algo en frontera pues trin
-        _, _, nodo = heapq.heappop(frontera) # sale el de menor costo; en empate, el primero que entro
+        _, _, nodo = heapq.heappop(frontera) # sale el de menor costo. en empate, el primero que entro
 
         expandidos += 1
         nodo["orden"] = expandidos
 
-        # la meta se prueba al expandir, no al generar, para garantizar que sea la mas barata
+        # la meta se prueba al expandir, no al generar
         if es_meta(nodo["estado"]):
             nodo_meta = nodo
             break
