@@ -89,10 +89,10 @@ proyecto-ia/
    source venv/bin/activate
    ```
 
-3. **Instala las dependencias** con el archivo `requirements.txt`
+3. **Instala las dependencias** con el archivo `Requirements.txt`
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r Requirements.txt
    ```
 
 4. **Verifica la instalación**
