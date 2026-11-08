@@ -284,54 +284,79 @@ def profundidad(mundo):
 
 
 
-#====================================================================================================
 #========================= ALGORITMOS DE BUSQUEDA INFORMADA =========================
-#====================================================================================================
 
 #========================= 4. Algoritmo de Busqueda avara =========================
 
 def busqueda_avara(mundo):
-    inicio_tiempo = time.perf_counter()
+    inicio_tiempo = time.perf_counter() # iniciamos el cronometro para medir cuanto se demora este algoritmo.
 
+    # primero inicializamos el estado del mundo, es decir, donde comienza el robot, cuantos fertilizantes tiene,
+    # cuales cultivos siguen secos, el combustible y si ya utilizo la avioneta.
     estado = estado_inicial(mundo)
+
+    # creamos la raiz del arbol con ese estado inicial y calculamos su heuristica.
+    # recordemos que h(n) nos indica que tan lejos parece estar este nodo de alcanzar la meta.
     raiz = crear_nodo(estado, h=heuristica(estado))
-    raiz["reinicio"] = True
+    raiz["reinicio"] = True # la raiz abre el historial de la rama, pues apenas estamos comenzando la busqueda.
 
     # Cola de prioridad: menor h(n) primero.
     # El contador conserva el orden de inserción cuando hay empates.
+    # basicamente, aqui no vamos a sacar los nodos por el orden en que fueron creados, sino por el valor de su heuristica.
+    # es decir, si tenemos un nodo con h=5 y otro con h=2, sale primero el de h=2 porque parece estar mas cerca de la solucion.
     contador = 0
-    pendientes = [(raiz["h"], contador, raiz)]
+    pendientes = [(raiz["h"], contador, raiz)] # metemos la raiz a la cola con su heuristica como prioridad.
 
-    expandidos = 0
-    profundidad_max = 0
-    nodo_meta = None
+    # inicializamos las variables que vamos a necesitar para llevar el registro de la busqueda.
+    expandidos = 0 # cantidad de nodos que hemos sacado de la cola para revisar y expandir.
+    profundidad_max = 0 # vamos almacenando la profundidad maxima que alcanzamos al generar hijos.
+    nodo_meta = None # por ahora no tenemos solucion, esto cambia cuando encontremos un estado que cumpla la meta.
 
+    # mientras tengamos nodos pendientes por revisar seguimos con la busqueda.
     while pendientes:
+
+        # sacamos el nodo que tenga el menor valor de heuristica.
+        # OJO, aqui no importa cual fue creado primero, sino cual parece estar mas cerca de la meta.
         _, _, nodo = heapq.heappop(pendientes)
-        estado_actual = nodo["estado"]
+        estado_actual = nodo["estado"] # guardamos el estado del nodo que acabamos de sacar para trabajar con el.
 
-
+        # contamos este nodo como expandido y le asignamos su orden de expansion.
         expandidos += 1
         nodo["orden"] = expandidos
 
+        # antes de generar hijos, revisamos si el estado actual ya cumple con la condicion de meta.
+        # si ya no quedan cultivos secos, encontramos la solucion y podemos salir del while.
         if es_meta(estado_actual):
             nodo_meta = nodo
             break
 
+        # ahora si, miramos todos los movimientos que puede realizar el robot desde este estado.
+        # movimientos_y_efectos nos devuelve el operador, el nuevo estado y el costo de realizar ese movimiento.
         for operador, nuevo_estado, costo_mov in movimientos_y_efectos(
             estado_actual, mundo
         ):
+            # sacamos la posicion del robot en el nuevo estado, es decir, la fila y columna a donde llegaria.
             celda = (nuevo_estado[0], nuevo_estado[1])
 
+            # aqui verificamos si acabamos de llegar a una de las celdas especiales que permiten reiniciar el historial.
+            # recordemos que esto ocurre cuando usamos la avioneta por primera vez, recogemos fertilizante o regamos un cultivo.
             reinicio = es_excepcion(
                 estado_actual, nuevo_estado, mundo
             )
 
+            # si NO estamos ante una excepcion, revisamos si esa celda ya fue recorrida en esta misma rama.
+            # si ya pasamos por ahi, saltamos esta iteracion para evitar ciclos y no generar caminos que nos devuelvan
+            # a una posicion que ya habiamos visitado.
+            # PERO si es una excepcion, dejamos pasar el movimiento porque acaba de ocurrir algo util en el estado.
             if not reinicio and celda_en_historial(nodo, celda):
                 continue
 
+            # calculamos el costo acumulado para llegar hasta este nuevo estado.
+            # este costo es el que ya llevabamos en el nodo actual + lo que cuesta el movimiento que acabamos de hacer.
             nuevo_costo = nodo["costo"] + costo_mov
 
+            # si el movimiento pasa las validaciones, creamos el hijo y lo conectamos con su padre.
+            # tambien le guardamos el operador que usamos, el costo acumulado y la heuristica de este nuevo estado.
             hijo = crear_nodo(
                 nuevo_estado,
                 padre=nodo,
@@ -340,19 +365,29 @@ def busqueda_avara(mundo):
                 h=heuristica(nuevo_estado)
             )
 
+            # marcamos si este hijo comienza un nuevo historial de recorrido por haber llegado a una excepcion.
             hijo["reinicio"] = reinicio
 
+            # actualizamos la profundidad maxima que llevamos alcanzada en el arbol.
             profundidad_max = max(
                 profundidad_max, hijo["profundidad"]
             )
 
+            # aumentamos el contador para conservar el orden de llegada cuando dos nodos tienen la misma heuristica.
             contador += 1
+
+            # metemos el hijo a la cola de prioridad usando UNICAMENTE su heuristica como prioridad.
+            # recordemos que en avara no tenemos en cuenta cuanto nos ha costado llegar hasta aqui,
+            # solo nos importa cual nodo parece estar mas cerca de la meta segun h(n).
             heapq.heappush(
                 pendientes, (hijo["h"], contador, hijo)
             )
 
+    # cuando encontramos la meta o se nos acaba la cola de nodos pendientes, detenemos el cronometro.
     tiempo = time.perf_counter() - inicio_tiempo
 
+    # devolvemos la informacion que necesita el resto del programa para mostrar los resultados.
+    # nodo_meta sera el nodo solucion si encontramos una, o None si no hubo solucion.
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
@@ -361,67 +396,115 @@ def busqueda_avara(mundo):
     }
 
 #========================= 5. Algoritmo de busqueda Estrella =========================
-def busqueda_a_estrella(mundo):
-    inicio_tiempo = time.perf_counter()
 
+def busqueda_a_estrella(mundo):
+    inicio_tiempo = time.perf_counter() # iniciamos el cronometro para medir cuanto se demora la busqueda.
+
+    # inicializamos el estado del mundo, con toda la informacion del robot y los elementos del tablero.
     estado = estado_inicial(mundo)
+
+    # creamos la raiz del arbol y calculamos su heuristica desde el estado inicial.
     raiz = crear_nodo(estado, h=heuristica(estado))
-    raiz["reinicio"] = True
+    raiz["reinicio"] = True # la raiz comienza un historial nuevo, pues todavia no hemos recorrido ninguna celda.
 
     # Cola de prioridad: menor f(n) = g(n) + h(n) primero.
+    # a diferencia de avara, aqui NO nos fijamos solamente en la heuristica.
+    # tambien tenemos en cuenta cuanto nos ha costado llegar al nodo actual.
+    # g(n) = costo acumulado desde el inicio hasta el nodo actual.
+    # h(n) = costo estimado que falta para llegar a la meta.
+    # f(n) = suma de ambos, es decir, el costo que llevamos + lo que estimamos que falta.
     contador = 0
-    pendientes = [(raiz["costo"] + raiz["h"], contador, raiz)]
+    pendientes = [(raiz["costo"] + raiz["h"], contador, raiz)] # metemos la raiz usando f(n) como prioridad.
 
+    # estas dos estructuras nos ayudan a controlar los costos de los estados que vamos encontrando.
+    # mejores_costos guarda el menor costo conocido para llegar a cada estado.
+    # comenzamos con el estado inicial, cuyo costo para llegar hasta el mismo es 0.
     mejores_costos = {estado: 0}
+
+    # costos_expandidos almacena el costo con el que ya expandimos un estado.
+    # esto nos permite evitar volver a expandir un mismo estado si ya lo habiamos revisado con un costo igual o menor.
     costos_expandidos = {}
 
+    # inicializamos las variables para llevar las estadisticas de la busqueda.
     expandidos = 0
     profundidad_max = 0
-    nodo_meta = None
+    nodo_meta = None # todavia no encontramos la solucion.
 
+    # mientras existan nodos pendientes por revisar seguimos buscando.
     while pendientes:
-        _, _, nodo = heapq.heappop(pendientes)
-        estado_actual = nodo["estado"]
-        costo_actual = nodo["costo"]
 
+        # sacamos de la cola el nodo con el menor valor de f(n), o sea, el menor costo estimado total.
+        _, _, nodo = heapq.heappop(pendientes)
+        estado_actual = nodo["estado"] # guardamos el estado actual del robot.
+        costo_actual = nodo["costo"] # guardamos cuanto nos ha costado llegar hasta este nodo (g(n)).
+
+        # PRIMERA VALIDACION:
+        # puede pasar que un mismo estado haya sido encontrado anteriormente por otro camino mas economico.
+        # en ese caso, mejores_costos ya tendra guardado ese costo menor.
+        # si el costo de este nodo es mayor que el mejor conocido, no tiene sentido seguir trabajando con el,
+        # porque ya tenemos una forma mas barata de llegar exactamente al mismo estado.
         if costo_actual > mejores_costos.get(
             estado_actual, float("inf")
         ):
             continue
 
+        # SEGUNDA VALIDACION:
+        # aqui revisamos si este estado ya fue expandido con un costo igual o menor.
+        # si es asi, lo saltamos porque volver a expandirlo con el mismo costo o uno mas alto seria repetir trabajo.
+        # float("inf") representa infinito, es decir, si todavia no aparece en el diccionario,
+        # asumimos que no ha sido expandido con ningun costo.
         if costo_actual >= costos_expandidos.get(
             estado_actual, float("inf")
         ):
             continue
 
+        # si paso las dos validaciones, registramos el costo con el que vamos a expandir este estado.
         costos_expandidos[estado_actual] = costo_actual
 
+        # contamos el nodo como expandido y le asignamos su orden de expansion.
         expandidos += 1
         nodo["orden"] = expandidos
 
+        # verificamos si el estado actual ya es la meta.
+        # si todos los cultivos fueron tratados, guardamos el nodo solucion y salimos de la busqueda.
         if es_meta(estado_actual):
             nodo_meta = nodo
             break
 
+        # si todavia no llegamos a la meta, generamos los posibles movimientos desde el estado actual.
+        # por cada movimiento obtenemos el operador, el nuevo estado y el costo de realizarlo.
         for operador, nuevo_estado, costo_mov in movimientos_y_efectos(
             estado_actual, mundo
         ):
+            # obtenemos la posicion a la que llegaria el robot luego de aplicar el operador.
             celda = (nuevo_estado[0], nuevo_estado[1])
 
+            # verificamos si el movimiento acaba de producir una excepcion que permita reiniciar el historial.
             reinicio = es_excepcion(
                 estado_actual, nuevo_estado, mundo
             )
 
+            # si no ocurrio una excepcion, revisamos si ya recorrimos esa celda en la rama actual.
+            # si ya la visitamos, no generamos el hijo porque estariamos creando un ciclo.
+            # cuando hay una excepcion dejamos pasar el movimiento, pues se acaba de producir un efecto util.
             if not reinicio and celda_en_historial(nodo, celda):
                 continue
 
+            # calculamos el nuevo costo acumulado, sumando lo que ya nos habia costado llegar al nodo actual
+            # mas el costo del movimiento que estamos realizando.
             nuevo_costo = costo_actual + costo_mov
 
+            # ahora comparamos este nuevo costo con el mejor costo que conocemos para llegar a este mismo estado.
+            # si el estado no estaba registrado, get nos devuelve infinito y por lo tanto el nuevo camino pasa.
+            # si ya lo habiamos encontrado, solamente lo dejamos pasar cuando esta nueva ruta sea mas economica.
             if nuevo_costo < mejores_costos.get(
                 nuevo_estado, float("inf")
             ):
+                # actualizamos el mejor costo conocido para este estado, porque acabamos de encontrar un camino mas barato.
                 mejores_costos[nuevo_estado] = nuevo_costo
 
+                # creamos el nodo hijo con su nuevo estado, su padre, el operador que aplicamos,
+                # el costo acumulado y la heuristica calculada desde esta nueva posicion.
                 hijo = crear_nodo(
                     nuevo_estado,
                     padre=nodo,
@@ -430,21 +513,33 @@ def busqueda_a_estrella(mundo):
                     h=heuristica(nuevo_estado)
                 )
 
+                # indicamos si este hijo comienza un nuevo historial por haber llegado a una celda de excepcion.
                 hijo["reinicio"] = reinicio
 
+                # actualizamos la profundidad maxima alcanzada al generar este nuevo nodo.
                 profundidad_max = max(
                     profundidad_max, hijo["profundidad"]
                 )
 
+                # aumentamos el contador para conservar el orden de insercion cuando varios nodos tengan el mismo f(n).
                 contador += 1
+
+                # calculamos la prioridad del hijo con la formula de A*:
+                # f(n) = g(n) + h(n).
+                # aqui si tenemos en cuenta tanto el costo real que llevamos como la estimacion de lo que falta.
                 prioridad = hijo["costo"] + hijo["h"]
 
+                # finalmente, metemos el hijo a la cola de prioridad.
+                # cuando volvamos a sacar un nodo, saldra primero el que tenga el menor f(n).
                 heapq.heappush(
                     pendientes, (prioridad, contador, hijo)
                 )
 
+    # cuando encontramos la meta o ya no quedan nodos pendientes, detenemos el cronometro.
     tiempo = time.perf_counter() - inicio_tiempo
 
+    # devolvemos los resultados de la busqueda para que la interfaz pueda mostrar las estadisticas.
+    # si nodo_meta es None significa que no se encontro una solucion.
     return {
         "nodo_meta": nodo_meta,
         "expandidos": expandidos,
