@@ -62,13 +62,3 @@ def leer_mundo(ruta):
         "avioneta": posiciones[AVIONETA][0],             # devuelve la posicion de la avioneta, que es la unica que hay pq solo hay una avioneta jaja
         "cultivos": tuple(posiciones[CULTIVO_SECO]),     # devuelve la tupla de posiciones de los cultivos secos
     }
-
-
-if __name__ == "__main__":
-    # PRUEBA PA VERIFICAR QUE EFECTIVAMENTE TRIPI Y SE LEE EL MUNDO BIEN
-    import sys
-    m = leer_mundo(sys.argv[1] if len(sys.argv) > 1 else "Prueba1.txt")
-    print("AgroBot :", m["inicio"])
-    print("Deposito:", m["deposito"])
-    print("Avioneta:", m["avioneta"])
-    print("Cultivos secos:", sorted(m["cultivos"]))
