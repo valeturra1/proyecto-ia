@@ -306,6 +306,7 @@ def busqueda_avara(mundo):
     # es decir, si tenemos un nodo con h=5 y otro con h=2, sale primero el de h=2 porque parece estar mas cerca de la solucion.
     contador = 0
     pendientes = [(raiz["h"], contador, raiz)] # metemos la raiz a la cola con su heuristica como prioridad.
+    visitados = {estado} # son estados completos que ya se generaron, es decir si otra rama llega al mismo estado, no lo volvemos a meter a la cola
 
     # inicializamos las variables que vamos a necesitar para llevar el registro de la busqueda.
     expandidos = 0 # cantidad de nodos que hemos sacado de la cola para revisar y expandir.
@@ -351,6 +352,11 @@ def busqueda_avara(mundo):
             if not reinicio and celda_en_historial(nodo, celda):
                 continue
 
+            # si este estado completo ya fue generado por otra rama entonces se descarta
+            if nuevo_estado in visitados:
+                continue
+            visitados.add(nuevo_estado)
+            
             # calculamos el costo acumulado para llegar hasta este nuevo estado.
             # este costo es el que ya llevabamos en el nodo actual + lo que cuesta el movimiento que acabamos de hacer.
             nuevo_costo = nodo["costo"] + costo_mov
@@ -554,7 +560,7 @@ if __name__ == "__main__":
     from mundo import leer_mundo
 
     #definimos el mundo (junto al archivo de prueba dado por el profesor oskitar)
-    mundo = leer_mundo(sys.argv[1] if len(sys.argv) > 1 else "Prueba1.txt")
+    mundo = leer_mundo(sys.argv[1] if len(sys.argv) > 1 else "pruebas/Prueba1.txt")
 
     print("***********************************PRUEBA DE ALGORITMOS DE BUSQUEDA NO INFORMADA***********************************")
 
