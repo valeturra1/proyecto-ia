@@ -160,4 +160,4 @@ Archivo de texto con **10 filas** de **10 enteros** separados por espacios (valo
 - Samuel Banguero Ortega — 2418671
 - Valeria Zamudio Arevalo — 2415210
 - Juan José Rodríguez Lozano — 2419084
-- Manuela Martinez Moncada — 2373458
+- Manuela Martinez Moncada — 2375458
